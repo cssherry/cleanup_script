@@ -4,6 +4,7 @@
 
 The publicly available dataset is not properly formatted for importing into db or further analysis. In order to clean up the data for analysis, I did the following:
 
+- Added headers based on data descriptions for [Atlantic](https://www.nhc.noaa.gov/data/hurdat/hurdat2-format-nov2019.pdf) and [Pacific](https://www.nhc.noaa.gov/data/hurdat/hurdat2-format-nencpac.pdf) datasets (major difference seem to be in the possible values for basins, record identifiers, and hurricane status)
 - Normalize by adding in header row information (alternatively, this could also be moved to different table)
 - Convert date and time fields to ISO8601 format, which is easier for most db and software to interpret
 - Added helper tables that link basins, record identifiers, and statuses to their meanings
