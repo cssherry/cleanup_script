@@ -15,4 +15,5 @@ The publicly available dataset is not properly formatted for importing into db o
 ### To run
 
 `python3 hurricane/process_hurricane.py` will create new hurricane.db sqlite file
+
 `python3 hurricane/process_hurricane.py <<path_to_sqlite_file>>`
