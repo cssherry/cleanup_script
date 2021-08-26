@@ -14,6 +14,12 @@ The publicly available dataset is not properly formatted for importing into db o
 
 ### To run
 
-`python3 hurricane/process_hurricane.py` will create new hurricane.db sqlite file
+`python3 hurricane/process_hurricane.py -h`: See help
 
-`python3 hurricane/process_hurricane.py <<path_to_sqlite_file>>`
+`python3 hurricane/process_hurricane.py`: Create new hurricane.db sqlite file in main
+
+`python3 hurricane/process_hurricane.py <<path_to_sqlite_file>>`: Add all data to sqlite file
+
+`python3 hurricane/process_hurricane.py -b atlantic <<path_to_sqlite_file>>`: Add atlantic hurricane data to sqlite file
+
+`python3 hurricane/process_hurricane.py -c <<path_to_csv_file>>`: Add all data to csv file

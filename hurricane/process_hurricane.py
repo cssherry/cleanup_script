@@ -1,6 +1,7 @@
 import csv
 import sqlite3
-import sys
+import argparse
+from pathlib import Path
 
 # UTILITY FUNCTIONS
 def get_null_or_int(val, maximum=-100):
@@ -54,7 +55,7 @@ def create_table(conn):
         id text PRIMARY KEY,
         type text
     );
-    
+
     INSERT INTO hurricane_basins(id, type)
     VALUES
         ('AL', 'Atlantic'),
@@ -63,7 +64,7 @@ def create_table(conn):
 
     -- Define Record Identifiers
     DROP TABLE IF EXISTS hurricane_record_identifiers;
-    
+
     CREATE TABLE hurricane_record_identifiers (
         id text PRIMARY KEY,
         type text
@@ -83,7 +84,7 @@ def create_table(conn):
 
     -- Define Status
     DROP TABLE IF EXISTS hurricane_status;
-    
+
     CREATE TABLE hurricane_status (
         id text PRIMARY KEY,
         type text,
@@ -100,7 +101,7 @@ def create_table(conn):
         ('SS', 'Subtropical cyclone of subtropical storm intensity', '> 34 knots'),
         ('LO', 'A low that is neither a tropical cyclone, a subtropical cyclone, nor an extratropical cyclone', 'any intensity'),
         ('DB', 'Disturbance', 'any intensity');
-    
+
     -- SET UP MAIN TABLE
     DROP TABLE IF EXISTS hurricane_data;
 
@@ -214,7 +215,7 @@ def get_csv_data(file_name):
                 header_array = [basin, atcf, year, name, str(expected_number_rows)]
 
                 # Reset row count
-                number_rows = 0 
+                number_rows = 0
 
     return result
 
@@ -246,27 +247,54 @@ def add_rows(conn, rows):
         se_60_kt_wind_nautical_miles,
         sw_60_kt_wind_nautical_miles,
         nw_60_kt_wind_nautical_miles
-    ) 
-    VALUES 
+    )
+    VALUES
     """
-    
+
     parsed_rows = [', '.join(row) for row in rows]
     all_rows = '), ('.join(parsed_rows)
     sql += f"({all_rows});"
     # print(f'Inserting sql: {sql}')
     run_sql(conn, sql)
 
+# 3) Insert into csv file
+def add_csv(file_name, data):
+    with open(file_name, 'w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerows(data)
+
 if __name__ == "__main__":
-    print('Get connection and create necessary tables')
-    args = sys.argv[1:]
-    table_path = args[0] if len(args) else '~/hurricane.db'
-    conn = create_connection(table_path)
-    create_table(conn)
+    # Set up argument parser
+    parser = argparse.ArgumentParser('Process HURDAT2 data')
+    parser.add_argument('db', metavar='path_to_file', type=str, nargs='?', default='hurricane',
+                        help='the path to sqlite or csv file')
+    parser.add_argument('-c', '--csv', dest='file_extension', action='store_const', const='csv', default='db', help='flag for exporting to csv format (default to add to sqlite db)')
+    parser.add_argument('-b', '--basin', dest='basin', choices=['atlantic', 'pacific'], help='specify single basin to export (default is to export data for both Atlantic and Pacific)', default='all')
+
+    args = parser.parse_args()
+    file_path = f'{args.db}.{args.file_extension}'
+    Path(file_path).touch(exist_ok=True)
+
+    is_sqlite = args.file_extension == 'db'
+
+    if is_sqlite:
+        print('Get connection and create necessary tables')
+        conn = create_connection(file_path)
+        create_table(conn)
 
     print('Get data')
-    data_atlantic = get_csv_data('hurricane/atlantic-hurdat2-1851-2020-052921.csv')
-    data_pacific = get_csv_data('hurricane/pacific-hurdat2-nepac-1949-2020-043021a.csv')
-    
-    print('Add data')
-    add_rows(conn, data_atlantic)
-    add_rows(conn, data_pacific)
+    data = []
+    if args.basin != 'pacific':
+        print('Processing Pacific Basin data')
+        data += get_csv_data('hurricane/atlantic-hurdat2-1851-2020-052921.csv')
+
+    if args.basin != 'atlantic':
+        print('Processing Atlantic Basin data')
+        data += get_csv_data('hurricane/pacific-hurdat2-nepac-1949-2020-043021a.csv')
+
+    if is_sqlite:
+        print(f'Adding data to sqlite file {file_path}')
+        add_rows(conn, data)
+    else:
+        print(f'Adding data to csv file {file_path}')
+        add_csv(file_path, data)
