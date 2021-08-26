@@ -10,7 +10,7 @@ The publicly available dataset is not properly formatted for importing into db o
 - Normalize longitude/latitude to numbers rather than using E/W, N/S suffixes
 - Mark maximum_wind_knots as null -99
 - Mark -999 wind and pressure values as null so it doesn't interfere with calculations
-- Combine Atlantic and Pacific datasets (Though it it worth noting that the Atlantic dataset has data form 1851, and the Pacific one only has data from 1949)
+- Give option to combine Atlantic and Pacific datasets (Though it it worth noting that the Atlantic dataset has data form 1851, and the Pacific one only has data from 1949)
 
 ### To run
 
