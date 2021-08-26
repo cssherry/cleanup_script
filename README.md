@@ -13,14 +13,19 @@ The publicly available dataset is not properly formatted for importing into db o
 - Mark -999 wind and pressure values as null so it doesn't interfere with calculations
 - Give option to combine Atlantic and Pacific datasets (Though it it worth noting that the Atlantic dataset has data form 1851, and the Pacific one only has data from 1949)
 
+### The CSV and SQLite version of the data
+
+- [SQLite](hurricane/hurricane_atlantic.db) version
+- [CSV](hurricane/hurricane_atlantic.csv) version
+
 ### To run
 
 `python3 hurricane/process_hurricane.py -h`: See help
 
-`python3 hurricane/process_hurricane.py`: Create new hurricane.db sqlite file in main
+`python3 hurricane/process_hurricane.py`: Create new hurricane.db SQLite file in main
 
-`python3 hurricane/process_hurricane.py <<path_to_sqlite_file>>`: Add all data to sqlite file
+`python3 hurricane/process_hurricane.py <<path_to_sqlite_file>>`: Add all data to SQLite file
 
-`python3 hurricane/process_hurricane.py -b atlantic <<path_to_sqlite_file>>`: Add atlantic hurricane data to sqlite file
+`python3 hurricane/process_hurricane.py -b atlantic <<path_to_sqlite_file>>`: Add atlantic hurricane data to SQLite file
 
 `python3 hurricane/process_hurricane.py -c <<path_to_csv_file>>`: Add all data to csv file
