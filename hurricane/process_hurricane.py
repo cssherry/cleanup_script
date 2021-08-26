@@ -8,8 +8,8 @@ def get_null_or_int(val, maximum=-100):
     parsed_val = int(val.strip()) # Used to check if val is the "null" placeholder -999
     return 'NULL' if parsed_val < maximum else str(parsed_val)
 
-def get_string(val):
-    return f"'{val.strip()}'"
+def get_string(val, is_sqlite):
+    return f"'{val.strip()}'" if is_sqlite else val.strip()
 
 def is_numeric(val):
     try:
@@ -144,7 +144,7 @@ def create_table(conn):
     run_sql(conn, sql)
 
 # 2) Parse CSV data by flattening sections
-def get_csv_data(file_name):
+def get_csv_data(file_name, is_sqlite):
     result = []
     number_rows = 0
     expected_number_rows = 0
@@ -167,11 +167,11 @@ def get_csv_data(file_name):
                     # Get date into ISO8601 format: "YYYY-MM-DD HH:MM:SS.SSS"
                     date = row[0].strip()
                     time = row[1].strip()
-                    datetime = get_string(f'{date[:4]}-{date[4:6]}-{date[6:]} {time[:2]}:{time[2:]}:00.000')
+                    datetime = get_string(f'{date[:4]}-{date[4:6]}-{date[6:]} {time[:2]}:{time[2:]}:00.000', is_sqlite)
 
                     # Get other calculated values
                     record_raw = row[2].strip()
-                    record = get_string(record_raw) if record_raw else 'NULL'
+                    record = get_string(record_raw, is_sqlite) if record_raw else 'NULL'
 
                     latitude_raw = row[4].strip()
                     latitude_num = latitude_raw[:-1]
@@ -184,7 +184,7 @@ def get_csv_data(file_name):
                     maximum_wind_knots = get_null_or_int(row[6], -50) # Filter out -99 for null
 
                     # Create row
-                    curr_row = [datetime, record, get_string(row[3]), latitude, longitude, maximum_wind_knots]
+                    curr_row = [datetime, record, get_string(row[3], is_sqlite), latitude, longitude, maximum_wind_knots]
 
                     # Get pressure and wind rows (replacing -999 with null)
                     # Need to filter out empty element at end, but do it in flexible manner in case csv gets fixed
@@ -202,12 +202,12 @@ def get_csv_data(file_name):
 
                 # Now parse header
                 cyclone_number = row[0].strip()
-                basin = get_string(cyclone_number[:2])
-                atcf = get_string(cyclone_number[2:4])
+                basin = get_string(cyclone_number[:2], is_sqlite)
+                atcf = get_string(cyclone_number[2:4], is_sqlite)
                 year = cyclone_number[4:]
 
                 name_raw = row[1]
-                name = 'NULL' if name_raw.strip().upper() == 'UNNAMED' else get_string(name_raw)
+                name = 'NULL' if name_raw.strip().upper() == 'UNNAMED' else get_string(name_raw, is_sqlite)
 
                 expected_number_rows = int(row[2].strip()) # sets expected row as well
 
@@ -261,6 +261,32 @@ def add_rows(conn, rows):
 def add_csv(file_name, data):
     with open(file_name, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
+        csv_writer.writerow([
+            'basin_id',
+            'atcf_cyclone_number_id',
+            'year_id',
+            'name',
+            'num_entries',
+            'date',
+            'record_identifier',
+            'status',
+            'latitude',
+            'longitude',
+            'maximum_wind_knots',
+            'minimum_pressure_millibars',
+            'ne_34_kt_wind_nautical_miles',
+            'se_34_kt_wind_nautical_miles',
+            'sw_34_kt_wind_nautical_miles',
+            'nw_34_kt_wind_nautical_miles',
+            'ne_50_kt_wind_nautical_miles',
+            'se_50_kt_wind_nautical_miles',
+            'sw_50_kt_wind_nautical_miles',
+            'nw_50_kt_wind_nautical_miles',
+            'ne_60_kt_wind_nautical_miles',
+            'se_60_kt_wind_nautical_miles',
+            'sw_60_kt_wind_nautical_miles',
+            'nw_60_kt_wind_nautical_miles',
+        ])
         csv_writer.writerows(data)
 
 if __name__ == "__main__":
@@ -286,11 +312,11 @@ if __name__ == "__main__":
     data = []
     if args.basin != 'pacific':
         print('Processing Pacific Basin data')
-        data += get_csv_data('hurricane/atlantic-hurdat2-1851-2020-052921.csv')
+        data += get_csv_data('hurricane/atlantic-hurdat2-1851-2020-052921.csv', is_sqlite)
 
     if args.basin != 'atlantic':
         print('Processing Atlantic Basin data')
-        data += get_csv_data('hurricane/pacific-hurdat2-nepac-1949-2020-043021a.csv')
+        data += get_csv_data('hurricane/pacific-hurdat2-nepac-1949-2020-043021a.csv', is_sqlite)
 
     if is_sqlite:
         print(f'Adding data to sqlite file {file_path}')
